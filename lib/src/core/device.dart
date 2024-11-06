@@ -79,7 +79,14 @@ final class Device {
 
   /// The factory method create
   factory Device.create(Client client, XmlDocument xml) {
-    return Device._(client, DeviceSpec.fromXml(xml));
+    var urlBase;
+    try {
+      final uri = Uri.parse(client.LOCATION);
+      urlBase = Uri(scheme: uri.scheme, host: uri.host, port: uri.port).toString();
+    } catch  (error) {
+
+    }
+    return Device._(client, DeviceSpec.fromXml(urlBase, xml));
   }
 
   late Map<String, Service> _servicesMap;
@@ -202,7 +209,7 @@ final class DeviceSpec {
       this.iconSpecs);
 
   /// The factory method fromXml
-  factory DeviceSpec.fromXml(XmlDocument xml) {
+  factory DeviceSpec.fromXml(String urlBase, XmlDocument xml) {
     final deviceType = xml.xpathEvaluate(_xpath('deviceType')).string;
     final presentationURL = xml.xpathEvaluate(_xpath('presentationURL')).string;
     final friendlyName = xml.xpathEvaluate(_xpath('friendlyName')).string;
@@ -216,7 +223,10 @@ final class DeviceSpec {
     // uuid:4b363f50-e15b-37b8-0b7c-0154aba720bb
     final UDN = xml.xpathEvaluate(_xpath('UDN')).string;
     final uuid = UDN.startsWith('uuid:') ? UDN.split(':')[1] : '';
-    final URLBase = xml.xpathEvaluate('/root/URLBase/text()').string;
+    var URLBase = xml.xpathEvaluate('/root/URLBase/text()').string;
+    if (URLBase.isEmpty) {
+      URLBase = urlBase;
+    }
     final length = xml.xpath('/root/device/serviceList/service').length;
     final iconLength = xml.xpath('/root/device/iconList/icon').length;
     return DeviceSpec(
@@ -232,7 +242,7 @@ final class DeviceSpec {
         UDN,
         uuid,
         URLBase,
-        List.generate(length, (index) => ServiceSpec.fromXml(xml, index + 1)),
+        List.generate(length, (index) => ServiceSpec.fromXml(urlBase, xml, index + 1)),
         List.generate(iconLength, (index) => IconSpec.fromXml(xml, index + 1)));
   }
 

@@ -10,3 +10,6 @@
 ## 1.0.2
 - Fix client & device cache
 - Fix documentation
+
+## 1.0.3
+- Fix URLBase
